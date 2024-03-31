@@ -97,7 +97,7 @@ COLUMN_NAMES = {
     "valorNumber": "valor",
     # Basic info
     "name": "name",
-    "groupValue": "index",
+    # "groupValue": "index",
     "inceptionDate": "inception_date",
     "strategy": "strategy",  # Custom field added during request
     "domicileCountry": "domicile_country",
@@ -182,23 +182,33 @@ def get_etf_params(
     strategy: Strategy = "epg-longOnly",
     exchange: Optional[Literal[Exchange, "any"]] = "any",
     asset: Optional[Asset] = None,
-    region: Optional[Region] = None,
-    country: Optional[str] = None,
     instrument: Optional[Instrument] = None,
     provider: Optional[str] = None,
     index_provider: Optional[str] = None,
     index: Optional[str] = None,
     isin: Optional[str] = None,
-) -> str:
+    bondRating: Optional[str]= None,
+    bondStrategy: Optional[str]= None,
+    bondType: Optional[str]= None,
+    ctype: Optional[str]= None,
+    country: Optional[str]= None,
+    currency: Optional[str]= None,
+    equityStrategy: Optional[str]= None,
+    bm: Optional[str]= None,
+    region: Optional[str]= None,
+    sector: Optional[str]= None,
+    cf: Optional[str]= None,
+    theme:Optional[str]= None)    -> str:
+    
     """
     Build `etfParams` for ETF data request for `BASE_PARAMS` enrichment.
-
+    
     Args
-        strategy: Optional strategy query, see `STRATEGIES`. Strategies are
-            disjunctive. There is no known way to request all the strategies at
-            once, so you should make 3 requests for full results.
-        exchange: Optional exchange query, see `EXCHANGES`. If "any" (default),
-            all exchanges are requested. If `None`, it seems that country specific
+        strategy: Optional strategy query, see `STRATEGIES` . Strategies are
+            disjunctive. There is no known way to request all t he strategies at
+            once, so you should make 3 requests f   or full results.
+        exchange: Optional exchange query, see `EXCHANGES`. If  "any" (default),
+          me  all exchanges are requested. If `None`, it seems that c   ountry specific
             exchanges are requested (gettex, XETRA and Stuttgart exchanges for DE).
         asset: Optional asset query, see `ASSETS`. Assets are disjunctive.
             If `None` (default), all assets are requested.
@@ -215,29 +225,30 @@ def get_etf_params(
             response.
         isin: Optional ISIN query.
     """
-    etf_params = f"groupField=index&productGroup={strategy}"
+    # etf_params = f"groupField=index&productGroup={strategy}"
+    etf_params=f"groupField=none&productGroup={strategy}"
     if exchange is not None:
         etf_params += f"&ls={exchange}"
     if asset is not None:
         etf_params += f"&assetClass={asset}"
-    if region is not None:
-        etf_params += f"&region={region}"
-    if country is not None:
-        if len(country) == 2 and country == country.upper():
-            py_country: pycountry.db.Country = pycountry.countries.get(alpha_2=country)
-            if py_country is None:
-                raise ValueError(f"Country alpha-2 code '{country}' not found.")
-        if len(country) != 2 or country != country.upper():
-            try:
-                matches = pycountry.countries.search_fuzzy(country)
-            except LookupError as e:
-                raise ValueError(f"Country '{country}' not recognized.") from e
-            try:
-                py_country = matches[0]  # type: ignore
-            except IndexError as e:
-                raise ValueError(f"Country '{country}' not recognized.") from e
-            country = py_country.alpha_2
-        etf_params += f"&country={country}"
+    # if region is not None:
+    #     etf_params += f"&region={region}"
+    # if country is not None:
+    #     if len(country) == 2 and country == country.upper():
+    #         py_country: pycountry.db.Country = pycountry.countries.get(alpha_2=country)
+    #         if py_country is None:
+    #             raise ValueError(f"Country alpha-2 code '{country}' not found.")
+    #     if len(country) != 2 or country != country.upper():
+    #         try:
+    #             matches = pycountry.countries.search_fuzzy(country)
+    #         except LookupError as e:
+    #             raise ValueError(f"Country '{country}' not recognized.") from e
+    #         try:
+    #             py_country = matches[0]  # type: ignore
+    #         except IndexError as e:
+    #             raise ValueError(f"Country '{country}' not recognized.") from e
+    #         country = py_country.alpha_2
+    #     etf_params += f"&country={country}"
     if instrument is not None:
         etf_params += f"&instrumentType={instrument}"
     if provider is not None:
@@ -248,6 +259,32 @@ def get_etf_params(
         etf_params += f"&index={index}"
     if isin is not None:
         etf_params += f"&query={isin}"
+    
+    if bondRating is not None:
+        etf_params += f"&bondRating={bondRating}"
+    if bondStrategy is not None:
+        etf_params += f"&bondStrategy={bondStrategy}"
+    if bondType is not None:
+        etf_params += f"&bondType={bondType}"
+    if ctype is not None:
+        etf_params += f"&ctype={ctype}"
+    if country is not None:
+        etf_params += f"&country={country}"
+    if currency is not None:
+        etf_params += f"&currency={currency}"
+    if equityStrategy is not None:
+        etf_params += f"&equityStrategy={equityStrategy}"
+    if bm is not None:
+        etf_params += f"&bm={bm}"
+    if region is not None:
+        etf_params += f"&region={region}"
+    if sector is not None:
+        etf_params += f"&sector={sector}"
+    if cf is not None:
+        etf_params += f"&cf={cf}"
+    if theme is not None:
+        etf_params += f"&theme={theme}"
+
     return etf_params
 
 
@@ -255,8 +292,6 @@ def get_raw_overview(
     strategy: Optional[Strategy] = None,
     exchange: Optional[Literal[Exchange, "any"]] = "any",
     asset: Optional[Asset] = None,
-    region: Optional[Region] = None,
-    country: Optional[str] = None,
     instrument: Optional[Instrument] = None,
     provider: Optional[str] = None,
     index_provider: Optional[str] = None,
@@ -265,6 +300,19 @@ def get_raw_overview(
     language: Language = "en",
     local_country: Country = "DE",
     universe: Universe = "private",
+    bondRating: Optional[str]= None,
+    bondStrategy: Optional[str]= None,
+    bondType: Optional[str]= None,
+    ctype: Optional[str]= None,
+    country: Optional[str]= None,
+    currency: Optional[str]= None,
+    equityStrategy: Optional[str]= None,
+    bm: Optional[str]= None,
+    region: Optional[str]= None,
+    sector: Optional[str]= None,
+    cf: Optional[str]= None,
+    theme:Optional[str]= None
+
 ) -> List[Dict[str, Any]]:
     """
     Args
@@ -306,13 +354,23 @@ def get_raw_overview(
                     strategy_,
                     exchange,
                     asset,
-                    region,
-                    country,
                     instrument,
                     provider,
                     index_provider,
                     index,
                     isin,
+                    bondRating,
+                    bondStrategy,
+                    bondType,
+                    ctype,
+                    country,
+                    currency,
+                    equityStrategy,
+                    bm,
+                    region,
+                    sector,
+                    cf,
+                    theme
                 ),
             },
         )
@@ -334,8 +392,6 @@ def load_overview(
     strategy: Optional[Strategy] = None,
     exchange: Optional[Literal[Exchange, "any"]] = "any",
     asset: Optional[Asset] = None,
-    region: Optional[Region] = None,
-    country: Optional[str] = None,
     instrument: Optional[Instrument] = None,
     provider: Optional[str] = None,
     index_provider: Optional[str] = None,
@@ -345,6 +401,19 @@ def load_overview(
     local_country: Country = "DE",
     universe: Universe = "private",
     enrich: bool = False,
+    bondRating: Optional[str]= None,
+    bondStrategy: Optional[str]= None,
+    bondType: Optional[str]= None,
+    ctype: Optional[str]= None,
+    country: Optional[str]= None,
+    currency: Optional[str]= None,
+    equityStrategy: Optional[str]= None,
+    bm: Optional[str]= None,
+    region: Optional[str]= None,
+    sector: Optional[str]= None,
+    cf: Optional[str]= None,
+    theme:Optional[str]= None
+
 ) -> pd.DataFrame:
     """
     Args
@@ -375,8 +444,6 @@ def load_overview(
         strategy,
         exchange,
         asset,
-        region,
-        country,
         instrument,
         provider,
         index_provider,
@@ -385,7 +452,21 @@ def load_overview(
         language,
         local_country,
         universe,
+        bondRating,
+        bondStrategy,
+        bondType,
+        ctype,
+        country,
+        currency,
+        equityStrategy,
+        bm,
+        region,
+        sector,
+        cf,
+        theme
     )
+    #check if rows have something
+    
     # Rebuild rows to columns
     data: Dict[str, list] = {key: [] for key in itertools.chain.from_iterable(rows)}
     for row in rows:
@@ -423,9 +504,12 @@ def load_overview(
         )
     # Convert columns.
     for column in df.columns.intersection(BOOL_COLUMNS):
-        df[column] = df[column].replace({"Yes": True, "No": False}).astype("bool")
+        # df[column] = df[column].replace({"Yes": True, "No": False}).astype("bool")
+        df.loc[(df[column]=='Yes'),column]=True
+        df.loc[(df[column]=='No'),column]=False
     for column in df.columns.intersection(INT64_COLUMNS):
         if column in df:
+            df[column] = pd.to_numeric(df[column], errors='coerce')
             df[column] = df[column].astype("Int64")
     for column in df.columns.intersection(CATEGORY_COLUMNS):
         if column in df:
